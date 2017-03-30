@@ -3,6 +3,8 @@
 var listElement = document.querySelector('.list');
 var itemElementList = listElement.children;
 
+var filtersElement = document.querySelector('.filters');
+
 
 var templateElement = document.getElementById('todoTemplate');
 var templateContainer = 'content' in templateElement ? templateElement.content : templateElement;
@@ -58,8 +60,8 @@ function onListClick(event) {
     if (isDeleteBtn(target)) {
         element = target.parentNode;
         deleteTodo(element);
-        Total.textContent -= 1;                           //статистика
     }
+    renderStats();
     
 }
 
@@ -71,91 +73,67 @@ function isDeleteBtn(target) {
     return target.classList.contains('task__delete-button');
 }
 
+//метод, обновляющий DOM
+
+function renderStats()  {
+    stats.done = listElement.querySelectorAll('.task_done').length;
+    done.textContent = stats.done;
+    stats.left = listElement.querySelectorAll('.task_todo').length;
+    left.textContent = stats.left;
+    total.textContent = parseInt(stats.done) + parseInt(stats.left);
+}
+
+//начальная статистика
+var done = document.querySelector('.statistic__done');
+var left = document.querySelector('.statistic__left');
+var total = document.querySelector('.statistic__total');
+
+var stats = {
+    done: listElement.querySelectorAll('.task_done').length, 
+    left: listElement.querySelectorAll('.task_todo').length
+}
 
 
+renderStats();
 
+function onFilter(event) {
+    var target = event.target;
+    document.querySelector('.filters__item_selected').classList.remove('filters__item_selected');
+    target.classList.add('filters__item_selected');
+    renderStats();
+    var status = target.getAttribute('data-filter');
+    displayMenu(status);   
+}
 
-
-
-
-
-//кнопки менюшки (все завершено осталось)
-var menu = document.querySelectorAll('[data-filter]');
-
-
-function Menu(elem) {
-    this.all = function() {
-        menu[0].classList.add('filters__item_selected');
-        menu[1].classList.remove('filters__item_selected');
-        menu[2].classList.remove('filters__item_selected');
+function displayMenu(element) {
+    if (element == 'all') {
         for (var i = itemElementList.length - 1; i >= 0; i--) {
             itemElementList[i].style.display = '';
-        };
-    };
-    this.done = function() {
-        menu[0].classList.remove('filters__item_selected');
-        menu[1].classList.add('filters__item_selected');
-        menu[2].classList.remove('filters__item_selected');
+        }
+    }
+    if (element == 'done') {
         for (var i = 0; i < itemElementList.length; i++) {
             (itemElementList[i].classList.contains('task_done')) ? 
             itemElementList[i].style.display = '' : itemElementList[i].style.display = 'none';
         }
-    };
-    this.todo = function() {
-        menu[0].classList.remove('filters__item_selected');
-        menu[1].classList.remove('filters__item_selected');
-        menu[2].classList.add('filters__item_selected');
+        
+    }
+    if (element == 'todo') {
         for (var i = 0; i < itemElementList.length; i++) {
             (itemElementList[i].classList.contains('task_todo')) ? 
             itemElementList[i].style.display = '' : itemElementList[i].style.display = 'none';
         }
-    };
-
-    var self = this;
-
-    elem.onclick = function(e) {                                              //обработчик для этих кнопок
-      var target = e.target;
-      var action = target.getAttribute('data-filter');
-      if (action) {
-        self[action]();
-      }
-    };
-  }
-
-for (var i = menu.length - 1; i >= 0; i--) {
-      new Menu(menu[i]);
-} 
-
-
-
-
-
-
-
-
-
-
-
-
-
+        
+    }
+}
 
 
 function changeTodoStatus(element) {
     var isTodo = element.classList.contains('task_todo');
-    setTodoStatusClassName(element, !isTodo);
-    if (isTodo !== false) {
-        Done.textContent = parseInt(Done.textContent) + 1;               //статистика
-        Left.textContent = Total.textContent - Done.textContent;
-    } else {
-        Left.textContent = parseInt(Left.textContent) + 1;                 //статистика
-        Done.textContent = Total.textContent - Left.textContent;           
-    } 
-    
+    setTodoStatusClassName(element, !isTodo);    
 }
 
 function deleteTodo(element) {
-    var isTodo = element.classList.contains('task_todo');
-    (isTodo === false) ? Done.textContent = parseInt(Done.textContent) - 1 : Left.textContent = parseInt(Left.textContent) - 1;    //статистика
     listElement.removeChild(element);
 }
 
@@ -180,9 +158,9 @@ function onInputKeydown(event) {
     var todo = createNewTodo(todoName);
     insertTodoElement(addTodoFromTemplate(todo));
     inputElement.value = '';
-    Total.textContent =parseInt(Total.textContent) + 1;     //статистика
-    Left.textContent = parseInt(Left.textContent) + 1;                 //статистика
+    renderStats();
 }
+
 function checkIfTodoAlreadyExists(todoName) {
     var todoElements = listElement.querySelectorAll('.task__name');
     var namesList = Array.prototype.map.call(todoElements, function(element) {
@@ -203,6 +181,7 @@ todoList
     .forEach(insertTodoElement);
 
 listElement.addEventListener('click', onListClick);
+filtersElement.addEventListener('click', onFilter);
 
 var inputElement = document.querySelector('.add-task__input');
 inputElement.addEventListener('keydown', onInputKeydown);
@@ -218,17 +197,3 @@ function insertTodoElement(elem) {
         listElement.appendChild(elem);
     }
 }
-
-
-
-//статистика
-
-var Total = document.querySelector('.statistic__total');
-Total.textContent = todoList.length;
-var Done = document.querySelector('.statistic__done');
-Done.textContent = todoList.filter(function(number){return number.status == 'done'}).length;
-var Left = document.querySelector('.statistic__left');
-Left.textContent = Total.textContent - Done.textContent;
-
-
-
